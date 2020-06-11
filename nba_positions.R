@@ -26,7 +26,19 @@ nba_positions_full <- seasons_stats %>%
         FieldGoalPct =`FG%`
     ) %>%
     # Make FieldGoalPct in range 0-100 to match others
-    mutate(FieldGoalPct = FieldGoalPct * 100)
+    mutate(FieldGoalPct = FieldGoalPct * 100) %>%
+    # Rename positions
+    mutate(
+        Position = fct_recode(
+            Position,
+            Center              = "C",
+            PowerForward        = "PF",
+            PowerForward_Center = "PF-C",
+            PointGuard          = "PG",
+            SmallForward        = "SF",
+            ShootingGuard       = "SG"
+        )
+    )
 
 nba_positions <- nba_positions_full %>%
     # Summarise players regardless of team
@@ -42,7 +54,7 @@ nba_positions <- nba_positions_full %>%
     # Select only Centers, Points Guards and Shooting Guards
     # with at least 10 games
     filter(
-        Position %in% c("C", "PG", "SG"),
+        Position %in% c("Center", "PointGuard", "ShootingGuard"),
         Games > 10
     ) %>%
     # Remove missing data and unneeded columns
@@ -58,7 +70,7 @@ k_means <- kmeans(stats_matrix, 3, iter.max = 100, nstart = 1000)
 # Find the cluster containing Centers
 center_cluster <- names(
     sort(
-        table(k_means$cluster[nba_positions$Position == "C"]),
+        table(k_means$cluster[nba_positions$Position == "Center"]),
         decreasing = TRUE
     )[1]
 )
@@ -76,18 +88,18 @@ nba_positions <- nba_positions %>%
     # Select only Centers in the Center cluster and
     # Guards NOT in the Center cluster
     filter(
-        (Cluster == center_cluster & Position == "C") |
-            (Cluster != center_cluster & Position != "C")
+        (Cluster == center_cluster & Position == "Center") |
+            (Cluster != center_cluster & Position != "Center")
     )
 
 # Select 50 Centers closest to the center of that cluster
 centers <- nba_positions %>%
-    filter(Position == "C") %>%
+    filter(Position == "Center") %>%
     slice_min(Dist, n = 50)
 
 # Select 50 Point Guards and 50 Shooting Guards
 guards <- nba_positions %>%
-    filter(Position != "C") %>%
+    filter(Position != "Center") %>%
     group_by(Position) %>%
     slice_sample(n = 50) %>%
     ungroup()
