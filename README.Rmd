@@ -1,0 +1,166 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r knitr, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment  = "#>",
+  echo     = FALSE
+)
+```
+
+# NBA positions dataset
+
+<!-- badges: start -->
+<!-- badges: end -->
+
+This repository contains the NBA positions dataset. The main dataset is designed
+to replace the iris dataset and contains basic statistics about 150 NBA Centers,
+Point Guards and Shooting Guards from 2017. There is a also a expanded dataset
+(`nba_positions_full`) the includes the same statistics for all NBA players in
+2017.
+
+## Source
+
+The source file for creating this dataset was obtained from Kaggle at
+https://www.kaggle.com/drgilermo/nba-players-stats/data?select=Seasons_Stats.csv
+which was originally scraped from [Basketball Reference][basketball-ref].
+
+If you use this dataset please acknowledge the Kaggle dataset and Basketball
+Reference (following the [instructions here][basketball-ref-citations]).
+
+## Processing
+
+Here is a brief description of how the dataset was created but see
+`nba_positions.R` for details:
+
+1. Read the Kaggle dataset
+2. Select rows where `Year == 2017`
+3. Select columns containing player, team, games played, positions, turnover
+   percentage, rebound percentage, assist percentage and field goal percentage
+4. Scale field goal percentage to the range 0-100 to match other statistics
+   (this is the `nba_positions_full` dataset)
+5. Summarise statistics for players who played on multiple teams in 2017
+6. Select Centers, Point Guards and Shooting Guards who played more than 10
+   games
+7. Cluster the players using k-means with three clusters
+8. Select 50 Centers that are most like their cluster, 50 random Point Guards
+   and 50 random Shooting Guards
+
+# Summary
+
+Their are two TSV files. The `nba_positions.tsv` file contains the dataset most
+similar to the iris data.
+
+* **nba_positions.tsv** 150 selected NBA players with these columns:
+  *  `Position` - playing position ("Center", "PointGuard" or "ShootingGuard")
+  * `TurnoverPct` - turnover percentage
+  * `ReboundPct` - rebound percentage
+  * `AssistPct` - assist percentage
+  * `FieldGoalPct` - field goal percentage
+* **nba_positions_full.tsv** all NBA players in 2017 with these _additional_
+  columns:
+  * `Player` - player name
+  * `Team` - team name
+  * `Games` - games played
+
+## Distributions
+
+Example plots showing distributions of the different statistics.
+
+```{r setup}
+library(ggplot2)
+library(readr)
+
+nba_positions <- read_tsv(
+    "nba_positions.tsv",
+    col_types = cols(
+        Position     = col_character(),
+        TurnoverPct  = col_double(),
+        ReboundPct   = col_double(),
+        AssistPct    = col_double(),
+        FieldGoalPct = col_double()
+    )
+)
+
+theme_set(
+    theme_minimal() +
+    theme(
+        plot.title.position = "plot",
+    )
+)
+```
+
+### Turnover percentage
+
+```{r turnover}
+ggplot(nba_positions, aes(x = TurnoverPct, fill = Position)) +
+    geom_histogram(bins = 30, position = "identity", alpha = 0.5) +
+    scale_fill_manual(values = c("#CB48B7", "#FC440F", "#337357")) +
+    scale_x_continuous(
+        breaks = seq(5, 95, 5),
+        labels = scales::percent_format(scale = 1, accuracy = 1)
+    ) +
+    labs(
+        x     = "Turnover percentage",
+        y     = "Frequency",
+        title = "Player turnover percentage by position"
+    )
+```
+
+### Rebound percentage
+
+```{r rebound}
+ggplot(nba_positions, aes(x = ReboundPct, fill = Position)) +
+    geom_histogram(bins = 30, position = "identity", alpha = 0.5) +
+    scale_fill_manual(values = c("#CB48B7", "#FC440F", "#337357")) +
+    scale_x_continuous(
+        breaks = seq(5, 95, 5),
+        labels = scales::percent_format(scale = 1, accuracy = 1)
+    ) +
+    labs(
+        x     = "Rebound percentage",
+        y     = "Frequency",
+        title = "Player rebound percentage by position"
+    )
+```
+
+### Assist percentage
+
+```{r assist}
+ggplot(nba_positions, aes(x = AssistPct, fill = Position)) +
+    geom_histogram(bins = 30, position = "identity", alpha = 0.5) +
+    scale_fill_manual(values = c("#CB48B7", "#FC440F", "#337357")) +
+    scale_x_continuous(
+        breaks = seq(5, 95, 5),
+        labels = scales::percent_format(scale = 1, accuracy = 1)
+    ) +
+    labs(
+        x     = "Assist percentage",
+        y     = "Frequency",
+        title = "Player assist percentage by position"
+    )
+```
+
+### Field goal percentage
+
+```{r field-goal}
+ggplot(nba_positions, aes(x = FieldGoalPct, fill = Position)) +
+    geom_histogram(bins = 30, position = "identity", alpha = 0.5) +
+    scale_fill_manual(values = c("#CB48B7", "#FC440F", "#337357")) +
+    scale_x_continuous(
+        breaks = seq(5, 95, 5),
+        labels = scales::percent_format(scale = 1, accuracy = 1)
+    ) +
+    labs(
+        x     = "Field goal percentage",
+        y     = "Frequency",
+        title = "Player field goal percentage by position"
+    )
+```
+
+[basketball-ref]: http://www.basketball-reference.com/ "Basketball Reference"
+[basketball-ref-citations]: https://www.basketball-reference.com/about/contact.html "Basketball Reference Contact"
