@@ -78,7 +78,7 @@ center_cluster <- names(
 # Find the distance of each player from their respective cluster centre
 dists_from_centre <- sqrt(rowSums(stats_matrix - fitted(k_means)) ^ 2)
 
-set.seed(1)
+set.seed(2)
 nba_positions <- nba_positions %>%
     # Add cluster and distance from centre to players
     mutate(
